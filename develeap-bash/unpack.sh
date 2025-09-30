@@ -16,42 +16,73 @@ shift $((OPTIND - 1))
 decompressed=0
 failed=0
 
-# -k=keeps original archive   -f/-o=force overwrite if exists
+update_counter() {
+  if (( $?==0 )); then
+    ((decompressed++))
+  else
+    ((failed++))
+  fi
+}
+
+# -k=keeps original archive   -f/-o=force overwrite if exists   -d=dir to extract
 declare -A decompressors=(
   ["gzip"]="gunzip -k -f"
   ["bzip2"]="bunzip2 -k -f"
   ["Zip"]="unzip -o -d"
-  #["compress'd"]="uncompress -f"
 )
 
 decompress_file() {
   file=$1
   file_type=$(file -b "$file" | awk '{print $1}')
   
-  if [[ ${file_type} == "compress'd" ]]; then
+  if [[ $file_type == "compress'd" ]]; then
     base="${file%.*}"
     out="$base"
-    # if archived name without extension, adds .out
+    ## if archived name without extension, adds .out to decompressed name
     [[ "$out" = "$file" ]] && out="${base}.out"
+    [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
     uncompress -c "$file" > "$out"
-    (( $? = 0 )) && ((decompressed++)) || ((failed++))
-  elif [[ "${decompressors[${file_type}]}" ]]; then
-    ${decompressors[${file_type}]} "$file"
-    (( $? = 0 )) && ((decompressed++)) || ((failed++))
-  else
-    [[ $vflag == true ]] && echo "Ignoring $(basename "$f")"
-    ((fasiled++))
-  fi
-     
-   
+    update_counter
   
+  elif [[ $file_type == "Zip" ]]; then
+    [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
+    unzip -o -d "$(dirname "$file")" "$file"
+    update_counter
+
+  elif [[ -n "${decompressors[$file_type]}" ]]; then
+    [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
+    ${decompressors[$file_type]} "$file"
+    update_counter
+
+  else
+    [[ $vflag == true ]] && echo "Ignoring $(basename "$file")"
+    ((failed++))
+  fi
 }
 
 
+decompress_path() {
+  path=$1
+  if [[ -d "$path" ]]; then
+    if [[ $rflag == true ]];then
+        find "$path" -type f | while read -r file; do
+          decompress_file "$file"
+        done
+    else
+      for file in "$path"/*; do
+        [[ -f "$file" ]] && decompress_file "$file"
+      done
+    fi
+  else
+    decompress_file "$path"
+  fi
+}
 
 
+for arg in "$@"; do
+  decompress_path "$arg"
+done
 
-
-
-
+echo "Decompressed $decompressed archive(s)"
+exit $failed
 
