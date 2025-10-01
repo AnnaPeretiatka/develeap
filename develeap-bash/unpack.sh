@@ -68,9 +68,9 @@ decompress_path() {
   path=$1
   if [[ -d "$path" ]]; then
     if [[ $rflag == true ]];then
-        find "$path" -type f | while read -r file; do
-          decompress_file "$file"
-        done
+      while IFS= read -r file; do
+        decompress_file "$file"
+      done < <(find "$path" -type f)
     else
       for file in "$path"/*; do
         [[ -f "$file" ]] && decompress_file "$file"
