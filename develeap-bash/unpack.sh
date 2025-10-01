@@ -17,7 +17,7 @@ decompressed=0
 failed=0
 
 update_counter() {
-  if (( $? == 0 )); then
+  if (( $1 == 0 )); then
     ((decompressed++))
   else
     ((failed++))
@@ -43,8 +43,8 @@ decompress_file() {
     [[ "$out" = "$file" ]] && out="${base}.out"
     [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
     uncompress -c "$file" > "$out"
-    #cmd_exit=$?
-    update_counter
+    cmd_exit=$?
+    update_counter $cmd_exit
   
   # zip needs a -d <dir> to control output dir 
   elif [[ $file_type == "Zip" ]]; then
