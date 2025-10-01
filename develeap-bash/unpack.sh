@@ -35,6 +35,7 @@ decompress_file() {
   file=$1
   file_type=$(file -b "$file" | awk '{print $1}')
   
+  # no -k option in uncompress
   if [[ $file_type == "compress'd" ]]; then
     base="${file%.*}"
     out="$base"
@@ -44,14 +45,16 @@ decompress_file() {
     uncompress -c "$file" > "$out"
     update_counter
   
+  # zip needs a -d <dir> to control output dir 
   elif [[ $file_type == "Zip" ]]; then
     [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
-    unzip -o -d "$(dirname "$file")" "$file"
+    unzip -o -d "$(dirname "$file")" -- "$file" >/dev/null 2>&1
     update_counter
-
+  
+  # by default output next to file path
   elif [[ -n "${decompressors[$file_type]}" ]]; then
     [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
-    ${decompressors[$file_type]} "$file"
+    ${decompressors[$file_type]} -- "$file" >/dev/null 2>&1
     update_counter
 
   else
