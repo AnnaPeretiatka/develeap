@@ -43,20 +43,19 @@ decompress_file() {
     [[ "$out" = "$file" ]] && out="${base}.out"
     [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
     uncompress -c "$file" > "$out"
-    cmd_exit=$?
-    update_counter $cmd_exit
+    update_counter $?
   
   # zip needs a -d <dir> to control output dir 
   elif [[ $file_type == "Zip" ]]; then
     [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
     unzip -o -d "$(dirname "$file")" -- "$file" >/dev/null 2>&1
-    update_counter
+    update_counter $?
   
   # by default output next to file path
   elif [[ -n "${decompressors[$file_type]}" ]]; then
     [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
     ${decompressors[$file_type]} -- "$file" >/dev/null 2>&1
-    update_counter
+    update_counter $?
 
   else
     [[ $vflag == true ]] && echo "Ignoring $(basename "$file")"
