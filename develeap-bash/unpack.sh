@@ -17,7 +17,7 @@ decompressed=0
 failed=0
 
 update_counter() {
-  if (( $1 == 0 )); then
+  if (( $? == 0 )); then
     ((decompressed++))
   else
     ((failed++))
@@ -32,30 +32,21 @@ declare -A decompressors=(
 )
 
 decompress_file() {
-  file=$1
-  file_type=$(file -b "$file" | awk '{print $1}')
+  local file="$1"
+  local file_type=$(file -b "$file" | awk '{print $1}')
   
-  # no -k option in uncompress
-  if [[ $file_type == "compress'd" ]]; then
-    base="${file%.*}"
-    out="$base"
-    ## if archived name without extension, adds .out to decompressed name
-    [[ "$out" = "$file" ]] && out="${base}.out"
-    [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
-    uncompress -c "$file" > "$out"
-    update_counter $?
-  
-  # zip needs a -d <dir> to control output dir 
-  elif [[ $file_type == "Zip" ]]; then
+  # zip needs a -d <dir> to control output dir + no -c
+  if [[ $file_type == "Zip" ]]; then
     [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
     unzip -o -d "$(dirname "$file")" -- "$file" >/dev/null 2>&1
-    update_counter $?
+    update_counter
   
-  # by default output next to file path
+  # # gzip, bzip2, compress'd handled through the array
   elif [[ -n "${decompressors[$file_type]}" ]]; then
+    local out="${file}.out"
     [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
-    ${decompressors[$file_type]} -- "$file" >/dev/null 2>&1
-    update_counter $?
+    ${decompressors[$file_type]} -c -- "$file" > "$out"
+    update_counter
 
   else
     [[ $vflag == true ]] && echo "Ignoring $(basename "$file")"
