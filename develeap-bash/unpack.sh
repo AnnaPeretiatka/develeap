@@ -38,7 +38,7 @@ decompress_file() {
   
   # zip needs a -d <dir> to control output dir + no -c
   if [[ $file_type == "Zip" ]]; then
-    [[ $vflag == true ]] && echo "Unpacking $base..."
+    [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
     unzip -o -d "$(dirname "$file")" -- "$file" >/dev/null 2>&1
     update_counter
   
@@ -79,6 +79,5 @@ for arg in "$@"; do
 done
 
 echo "Decompressed $decompressed archive(s)"
-echo "failed=$failed"
 exit $failed
 
