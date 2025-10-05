@@ -26,11 +26,10 @@ update_counter() {
 
 # -k=keeps original archive   -f/-o=force overwrite if exists   -d=dir to extract
 declare -A decompressors=(
+  ["Zip"]="unzip -o -d"
   ["gzip"]="gunzip"
   ["bzip2"]="bunzip2"
-  ["Zip"]="unzip -o -d"
   ["compress'd"]="uncompress"
-  
 )
 
 decompress_file() {
@@ -39,7 +38,7 @@ decompress_file() {
   
   # zip needs a -d <dir> to control output dir + no -c
   if [[ $file_type == "Zip" ]]; then
-    [[ $vflag == true ]] && echo "Unpacking $(basename "$file")..."
+    [[ $vflag == true ]] && echo "Unpacking $base..."
     unzip -o -d "$(dirname "$file")" -- "$file" >/dev/null 2>&1
     update_counter
   
@@ -80,5 +79,6 @@ for arg in "$@"; do
 done
 
 echo "Decompressed $decompressed archive(s)"
+echo "failed=$failed"
 exit $failed
 
