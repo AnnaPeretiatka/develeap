@@ -26,9 +26,11 @@ update_counter() {
 
 # -k=keeps original archive   -f/-o=force overwrite if exists   -d=dir to extract
 declare -A decompressors=(
-  ["gzip"]="gunzip -k -f"
-  ["bzip2"]="bunzip2 -k -f"
+  ["gzip"]="gunzip"
+  ["bzip2"]="bunzip2"
   ["Zip"]="unzip -o -d"
+  ["compress'd"]="uncompress"
+  
 )
 
 decompress_file() {
